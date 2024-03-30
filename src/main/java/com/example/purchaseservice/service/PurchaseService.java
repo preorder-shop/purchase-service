@@ -5,6 +5,7 @@ import com.example.purchaseservice.domain.PurchaseDto;
 import com.example.purchaseservice.domain.StockDto;
 import com.example.purchaseservice.domain.entity.Purchase;
 import com.example.purchaseservice.repository.PurchaseRepository;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,9 +23,16 @@ public class PurchaseService {
 
         if(prob<0.2){
             log.error("잔액 부족으로 결제 취소");
-            StockDto increaseStock = stockServiceClient.increaseStock(purchaseDto.getProductId());
-            log.info("재고 + 1 : {}",increaseStock);
-            return "fail-2";
+            try{
+                StockDto increaseStock = stockServiceClient.increaseStock(purchaseDto.getProductId());
+                log.info("재고 + 1 : {}",increaseStock);
+            }catch (FeignException e){
+                log.error(e.getMessage());
+
+            }finally {
+                return "fail-2";
+            }
+
         }
 
         // 주문 완료
